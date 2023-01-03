@@ -25,5 +25,5 @@
 (define (distance time speed)
   (* time speed))
 
-(animate (λ (time)
+(animate (lambda (time)
            (my-place-image ufo 300 200 150 (distance time 3))))
