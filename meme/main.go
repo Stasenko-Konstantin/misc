@@ -24,13 +24,20 @@ func readTable(img image.Image) {
 	}
 }
 
-func contains[T comparable](s []T, e T) bool {
-	for _, c := range s {
-		if c == e {
-			return true
+func checkX(x, i, lenTable int) int {
+	var a int
+	if x > lenTable/2 {
+		a = x + i
+		if a > lenTable {
+			return x
+		}
+	} else {
+		a = x - i
+		if a < 0 {
+			return x
 		}
 	}
-	return false
+	return a
 }
 
 func main() {
@@ -57,7 +64,11 @@ func main() {
 	readTable(img)
 	fmt.Println("start rendering")
 	percent := (bounds.Max.X / 2) / 10
-	var edges []int
+	var (
+		edges    []int
+		turn     bool
+		lenTable = len(table)
+	)
 	fmt.Print("[")
 	for i := 1; i <= bounds.Max.X/2; i++ {
 		edges = append(edges, i, bounds.Max.X-i)
@@ -68,10 +79,15 @@ func main() {
 				if contains(edges, x) {
 					palleted.Set(x, y, color.White)
 				} else {
-					palleted.Set(x, y, table[x][y])
+					if turn {
+						palleted.Set(x, y, table[checkX(x, i, lenTable)][y])
+					} else {
+						palleted.Set(x, y, table[x][y])
+					}
 				}
 			}
 		}
+		turn = !turn
 		anim.Delay = append(anim.Delay, delay)
 		anim.Image = append(anim.Image, palleted)
 		if i%percent == 0 {
@@ -87,4 +103,13 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("]")
+}
+
+func contains[T comparable](s []T, e T) bool {
+	for _, c := range s {
+		if c == e {
+			return true
+		}
+	}
+	return false
 }
