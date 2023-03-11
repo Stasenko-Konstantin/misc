@@ -28,7 +28,7 @@ func checkX(x, i, lenTable int) int {
 	var a int
 	if x > lenTable/2 {
 		a = x + i
-		if a > lenTable {
+		if a >= lenTable {
 			return x
 		}
 	} else {
@@ -80,7 +80,7 @@ func main() {
 					palleted.Set(x, y, color.White)
 				} else {
 					if turn {
-						palleted.Set(x, y, table[checkX(x, i, lenTable)][y])
+						palleted.Set(x, y, table[checkX(x, i, lenTable)][checkX(y, i, len(table[0]))])
 					} else {
 						palleted.Set(x, y, table[x][y])
 					}

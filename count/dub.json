@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"Stasenko Konstantin"
+	],
+	"copyright": "Copyright © 2023, Stasenko Konstantin",
+	"description": "A counter of text file lines",
+	"license": "GPLv3",
+	"name": "count"
+}
