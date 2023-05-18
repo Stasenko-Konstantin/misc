@@ -5,3 +5,4 @@ a variety of minor programs
 - lisp-pamper - a little dabbling with lisps
 - meme - cli app for making a spinning gif from an image
 - count - counter of text file lines 
+- misc - some code snippets
