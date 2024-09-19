@@ -1,8 +1,9 @@
 # misc
 a variety of minor programs
 
-- twister - tiny android application for basic automating the game of twister
+- count - counter of text file lines (incomplete)
+- darts - darts applications for 2 to 16 players
 - lisp-pamper - a little dabbling with lisps
 - meme - cli app for making a spinning gif from an image
-- count - counter of text file lines 
 - misc - some code snippets
+- twister - tiny android application for basic automating the game of twister (dont work)
