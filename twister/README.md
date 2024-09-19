@@ -11,6 +11,12 @@ supports only Russian
 ### debug:
     adb -d install -r twister.apk
 
+#### or:
+    make debug
+
+### install:
+    make install
+
 <br>
 
 REQUIREMENTS: Golang, Android NDK, fyne, Android itself
