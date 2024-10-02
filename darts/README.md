@@ -9,7 +9,7 @@ supports only Russian
     make build
 
 ### debug:
-    adb -d install -r twister.apk
+    adb -d install -r darts.apk
 
 #### or:
     make debug
