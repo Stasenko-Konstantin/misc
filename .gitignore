@@ -2,6 +2,6 @@
 twister/twister.apk
 lisp-pamper/ufo.rkt~
 meme/out.gif
-count/main
-count/Makefile
 darts/darts.apk
+count/.idea
+count/target
