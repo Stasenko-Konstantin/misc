@@ -13,3 +13,16 @@ command line applications for recursive line counting in files
   - [ ] specifying that different formats should be counted as one
   - [ ] regular expression specification
 - [x] loading message
+
+### usage
+
+requires cargo for building executable file
+
+```bash
+git clone git@github.com:Stasenko-Konstantin/misc.git && cd misc/count
+./build.sh     # requires sudo for cp executable file to /bin
+               # reopen terminal
+count          # prints files from current and sub- directories
+count <file>   # prints <file>
+count <dir>    # prints files from <dir>
+```
