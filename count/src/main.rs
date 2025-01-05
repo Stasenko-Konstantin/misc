@@ -1,27 +1,24 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Error, Read};
-use std::path::Path;
+use std::path::{PathBuf};
 use encoding_rs::UTF_8;
 
-fn main() {
-    println!("counting...\n"); // TODO make index for files (maybe vec?) and print his length
-    let curr_dir = std::env::current_dir().unwrap();
+fn main() -> Result<(), Error> {
+    let curr_dir = std::env::current_dir()?;
+    let file_index = &mut Vec::<PathBuf>::new();
+    make_index(curr_dir, file_index)?;
+    println!("counting {} files...\n", file_index.len());
     let mut hmap = HashMap::new();
-    let res = count(curr_dir, &mut hmap);
-    match res {
-        Ok(res) => println!("{:#?}", res),
-        Err(e) => eprintln!("{:#?}", e),
-    }
+    let res = count(file_index, &mut hmap)?;
+    println!("{:#?}", res);
     println!("\ndone!");
+    Ok(())
 }
 
-fn count(
-    path: std::path::PathBuf,
-    map: &mut HashMap<String, i32>,
-) -> Result<&mut HashMap<String, i32>, Error> {
+fn make_index(path: PathBuf, vec: &mut Vec<PathBuf>) -> Result<&mut Vec<PathBuf>, Error> {
     if path.to_str().unwrap().starts_with('.') {
-        return Ok(map);
+        return Ok(vec);
     }
     let dir = std::fs::read_dir(path.clone())?;
     for entry in dir {
@@ -30,7 +27,7 @@ fn count(
             continue;
         }
         if entry.path().is_dir() {
-            count(entry.path(), map)?;
+            make_index(entry.path(), vec)?;
         }
         if !entry.path().file_name().unwrap().to_str().unwrap().contains('.') {
             continue;
@@ -38,9 +35,18 @@ fn count(
         if !is_text_file(entry.path()) {
             continue;
         }
-        let file = std::fs::read_to_string(entry.path().clone())?;
+       vec.push(entry.path());
+    }
+    Ok(vec)
+}
+
+fn count<'a>(
+    file_index: &mut Vec<PathBuf>,
+    map: &'a mut HashMap<String, i32>,
+) -> Result<&'a mut HashMap<String, i32>, Error> {
+    for file_path in file_index {
         let mut ext = ".".to_string();
-        if let Some(ext_os_str) = entry.path().extension() {
+        if let Some(ext_os_str) = file_path.extension() {
             if let Some(ext_str) = ext_os_str.to_str() {
                 ext = ext_str.to_string();
             }
@@ -49,7 +55,7 @@ fn count(
             *i
         } else {
             0
-        } + count_file_lines(file);
+        } + count_file_lines(file_path)?;
         if res != 0 {
             map.insert(ext, res);
         }
@@ -57,11 +63,14 @@ fn count(
     Ok(map)
 }
 
-fn count_file_lines(file: String) -> i32 {
-    file.lines().count() as i32 // TODO working very strange
+fn count_file_lines(file_path: &mut PathBuf) -> Result<i32, Error> {
+    let mut file = String::new(); 
+    File::read_to_string(&mut File::open(file_path)?, &mut file)?;
+    let res = file.split('\n').fold(0, |sum, _| sum+1);
+    Ok(res)
 }
 
-fn is_text_file<P: AsRef<Path>>(path: P) -> bool {
+fn is_text_file(path: PathBuf) -> bool {
     let f = || {
         let mut file = File::open(path)?;
         let mut buffer = Vec::new();
