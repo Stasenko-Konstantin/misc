@@ -4,7 +4,7 @@ command line applications for recursive line counting in files
 
 ### todo:
 - [x] recursive counting of lines in files
-- [ ] specifying the file/directory to be counted
+- [x] specifying the file/directory to be counted
 - [ ] exclude files/directories from counting 
 - [ ] highlighting/ignoring certain file formats
 - [ ] specifying how rows are counted:

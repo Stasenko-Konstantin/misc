@@ -1,13 +1,20 @@
 use std::collections::HashMap;
+use std::env::args;
 use std::fs::File;
 use std::io::{Error, Read};
 use std::path::{PathBuf};
 use encoding_rs::UTF_8;
 
 fn main() -> Result<(), Error> {
+    let args: Vec<String> = args().collect();
     let curr_dir = std::env::current_dir()?;
+    let start_paths: Vec<PathBuf> = if args.len() == 1 {
+        vec![std::env::current_dir()?]
+    } else {
+        args[1..].iter().map(|x| curr_dir.join(PathBuf::from(x))).collect()
+    };
     let file_index = &mut Vec::<PathBuf>::new();
-    make_index(curr_dir, file_index)?;
+    make_index(start_paths, file_index)?;
     println!("counting {} files...\n", file_index.len());
     let mut hmap = HashMap::new();
     let res = count(file_index, &mut hmap)?;
@@ -16,26 +23,32 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn make_index(path: PathBuf, vec: &mut Vec<PathBuf>) -> Result<&mut Vec<PathBuf>, Error> {
-    if path.to_str().unwrap().starts_with('.') {
-        return Ok(vec);
-    }
-    let dir = std::fs::read_dir(path.clone())?;
-    for entry in dir {
-        let entry = entry?;
-        if entry.path().file_name().unwrap().to_str().unwrap().starts_with('.') {
+fn make_index(paths: Vec<PathBuf>, vec: &mut Vec<PathBuf>) -> Result<&mut Vec<PathBuf>, Error> {
+    for path in paths {
+        if path.to_str().unwrap().starts_with('.') {
             continue;
         }
-        if entry.path().is_dir() {
-            make_index(entry.path(), vec)?;
-        }
-        if !entry.path().file_name().unwrap().to_str().unwrap().contains('.') {
+        if path.is_file() {
+            vec.push(path);
             continue;
         }
-        if !is_text_file(entry.path()) {
-            continue;
+        let dir = std::fs::read_dir(path.clone())?;
+        for entry in dir {
+            let entry = entry?;
+            if entry.path().file_name().unwrap().to_str().unwrap().starts_with('.') {
+                continue;
+            }
+            if entry.path().is_dir() {
+                make_index(vec![entry.path()], vec)?;
+            }
+            if !entry.path().file_name().unwrap().to_str().unwrap().contains('.') {
+                continue;
+            }
+            if !is_text_file(entry.path()) {
+                continue;
+            }
+            vec.push(entry.path());
         }
-       vec.push(entry.path());
     }
     Ok(vec)
 }
