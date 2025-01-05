@@ -5,8 +5,19 @@ use std::io::{Error, Read};
 use std::path::{PathBuf};
 use encoding_rs::UTF_8;
 
+const HELP_MSG: &str = "
+count -h       # same as `count --help` - prints help message
+count          # prints files from current and subdirectories
+count <file>   # prints <file>
+count <dir>    # prints files from <dir>
+";
+
 fn main() -> Result<(), Error> {
     let args: Vec<String> = args().collect();
+    if args.contains(&String::from("-h")) || args.contains(&String::from("--help")) {
+        println!("{}", HELP_MSG);
+        return Ok(());
+    }
     let curr_dir = std::env::current_dir()?;
     let start_paths: Vec<PathBuf> = if args.len() == 1 {
         vec![std::env::current_dir()?]
