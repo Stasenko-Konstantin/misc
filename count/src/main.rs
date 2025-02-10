@@ -1,31 +1,27 @@
 use std::collections::HashMap;
-use std::env::args;
 use std::fs::File;
 use std::io::{Error, Read};
 use std::path::{PathBuf};
 use encoding_rs::UTF_8;
+use clap::Parser;
 
-const HELP_MSG: &str = "
-count -h       # same as `count --help` - prints help message
-count          # prints files from current and subdirectories
-count <file>   # prints <file>
-count <dir>    # prints files from <dir>
-";
+#[derive(Parser, Debug)]
+#[command(version, about)]
+struct Args {
+    #[arg(short, long)]
+    paths: Vec<PathBuf>,
+    
+    #[arg(short, long, help = "Excludes specified file names and/or extensions")]
+    excludes: Vec<String>,
+}
 
 fn main() -> Result<(), Error> {
-    let args: Vec<String> = args().collect();
-    if args.contains(&String::from("-h")) || args.contains(&String::from("--help")) {
-        println!("{}", HELP_MSG);
-        return Ok(());
-    }
-    let curr_dir = std::env::current_dir()?;
-    let start_paths: Vec<PathBuf> = if args.len() == 1 {
-        vec![std::env::current_dir()?]
-    } else {
-        args[1..].iter().map(|x| curr_dir.join(PathBuf::from(x))).collect()
+    let mut args = Args::parse();
+    if args.paths.is_empty() {
+        args.paths = vec![std::env::current_dir()?]
     };
     let file_index = &mut Vec::<PathBuf>::new();
-    make_index(start_paths, file_index)?;
+    make_index(args.paths, file_index, args.excludes)?;
     println!("counting {} files...\n", file_index.len());
     let mut hmap = HashMap::new();
     let res = count(file_index, &mut hmap)?;
@@ -34,9 +30,13 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn make_index(paths: Vec<PathBuf>, vec: &mut Vec<PathBuf>) -> Result<&mut Vec<PathBuf>, Error> {
+fn make_index(paths: Vec<PathBuf>, vec: &mut Vec<PathBuf>, excludes: Vec<String>) -> Result<&mut Vec<PathBuf>, Error> {
     for path in paths {
-        if path.to_str().unwrap().starts_with('.') {
+        let file_name = path.file_name().unwrap_or("".as_ref()).to_str().unwrap_or("").to_string();
+        let ext = ".".to_string() + &*path.extension().unwrap_or("".as_ref()).to_str().unwrap_or("").to_string();
+        if path.to_str().unwrap().starts_with('.') || 
+            excludes.contains(&file_name) ||
+            excludes.contains(&ext) {
             continue;
         }
         if path.is_file() {
@@ -46,11 +46,15 @@ fn make_index(paths: Vec<PathBuf>, vec: &mut Vec<PathBuf>) -> Result<&mut Vec<Pa
         let dir = std::fs::read_dir(path.clone())?;
         for entry in dir {
             let entry = entry?;
-            if entry.path().file_name().unwrap().to_str().unwrap().starts_with('.') {
+            let file_name = entry.path().file_name().unwrap_or("".as_ref()).to_str().unwrap_or("").to_string();
+            let ext = ".".to_string() + &*entry.path().extension().unwrap_or("".as_ref()).to_str().unwrap_or("").to_string();
+            if entry.path().file_name().unwrap().to_str().unwrap().starts_with('.') ||
+                excludes.contains(&file_name) ||
+                excludes.contains(&ext) {
                 continue;
             }
             if entry.path().is_dir() {
-                make_index(vec![entry.path()], vec)?;
+                make_index(vec![entry.path()], vec, excludes.clone())?;
             }
             if !entry.path().file_name().unwrap().to_str().unwrap().contains('.') {
                 continue;
