@@ -11,7 +11,10 @@ struct Args {
     #[arg(short, long)]
     paths: Vec<PathBuf>,
     
-    #[arg(short, long, help = "Excludes specified file names and/or extensions")]
+    #[arg(short, long, value_name = "EXTENSION")]
+    ext: Option<String>,
+    
+    #[arg(short = 'E', long, help = "Excludes specified file names and/or extensions")]
     excludes: Vec<String>,
 }
 
@@ -21,7 +24,7 @@ fn main() -> Result<(), Error> {
         args.paths = vec![std::env::current_dir()?]
     };
     let file_index = &mut Vec::<PathBuf>::new();
-    make_index(args.paths, file_index, args.excludes)?;
+    make_index(args.paths, file_index, args.ext, args.excludes)?;
     println!("counting {} files...\n", file_index.len());
     let mut hmap = HashMap::new();
     let res = count(file_index, &mut hmap)?;
@@ -30,13 +33,19 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn make_index(paths: Vec<PathBuf>, vec: &mut Vec<PathBuf>, excludes: Vec<String>) -> Result<&mut Vec<PathBuf>, Error> {
+fn is_path_need_exclude(path: PathBuf, extension: Option<String>, excludes: Vec<String>) -> bool {
+    let file_name = path.file_name().unwrap_or("".as_ref()).to_str().unwrap_or("").to_string();
+    let ext = ".".to_string() + &*path.extension().unwrap_or("".as_ref()).to_str().unwrap_or("").to_string();
+    file_name.starts_with('.') ||
+        excludes.contains(&file_name) ||
+        excludes.contains(&ext) ||
+        (extension.is_some() && extension.unwrap() != ext)
+}
+
+fn make_index(paths: Vec<PathBuf>, vec: &mut Vec<PathBuf>, extension: Option<String>, excludes: Vec<String>) -> Result<&mut Vec<PathBuf>, Error> {
     for path in paths {
-        let file_name = path.file_name().unwrap_or("".as_ref()).to_str().unwrap_or("").to_string();
-        let ext = ".".to_string() + &*path.extension().unwrap_or("".as_ref()).to_str().unwrap_or("").to_string();
-        if path.to_str().unwrap().starts_with('.') || 
-            excludes.contains(&file_name) ||
-            excludes.contains(&ext) {
+        
+        if is_path_need_exclude(path.clone(), None, excludes.clone()) {
             continue;
         }
         if path.is_file() {
@@ -46,15 +55,11 @@ fn make_index(paths: Vec<PathBuf>, vec: &mut Vec<PathBuf>, excludes: Vec<String>
         let dir = std::fs::read_dir(path.clone())?;
         for entry in dir {
             let entry = entry?;
-            let file_name = entry.path().file_name().unwrap_or("".as_ref()).to_str().unwrap_or("").to_string();
-            let ext = ".".to_string() + &*entry.path().extension().unwrap_or("".as_ref()).to_str().unwrap_or("").to_string();
-            if entry.path().file_name().unwrap().to_str().unwrap().starts_with('.') ||
-                excludes.contains(&file_name) ||
-                excludes.contains(&ext) {
+            if is_path_need_exclude(entry.path(), extension.clone(), excludes.clone()) {
                 continue;
             }
             if entry.path().is_dir() {
-                make_index(vec![entry.path()], vec, excludes.clone())?;
+                make_index(vec![entry.path()], vec, extension.clone(), excludes.clone())?;
             }
             if !entry.path().file_name().unwrap().to_str().unwrap().contains('.') {
                 continue;
