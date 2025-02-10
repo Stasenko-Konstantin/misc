@@ -12,10 +12,11 @@ command line applications for recursive line counting in files
   - [ ] counting lines without line breaks
   - [ ] specifying that different formats should be counted as one
   - [ ] regular expression specification
+- [ ] result sorting in specific way
 - [x] loading message
 - [x] help message
 
-### usage
+### get
 
 requires [cargo](https://www.rust-lang.org/tools/install) for building executable file
 
@@ -25,6 +26,8 @@ git clone git@github.com:Stasenko-Konstantin/misc.git && cd misc/count
                # reopen terminal
 count -h                  
 ```
+
+### usage
 
 ```bash
 Usage: count [OPTIONS]
